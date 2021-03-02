@@ -1,0 +1,35 @@
+
+{% block content %}
+
+
+{% if elections %}
+<h3>Latest Polls</h3>
+<br>
+<div class="container">
+    <div class="row row-cols-2 gy-2">
+        {% for election in elections %}
+        <div class="col">
+            <div class="p-3 border bg-light">
+                <h4><a href="{% url 'view-results' election.pk %}"> {{ election.description }} </a></h4>
+                <ul> 
+                    <li> Date Created: {{ election.date_published }} </li>
+                    <li> Ballot Type: {{ election.ballot_type_str }} </li>
+                    <li> Method: {{ election.method_str }} </li>
+                    <li> Number of Voters : {{ election.voter_num }} </li>
+                    <!-- <li> Choices </li>
+                    <ul>
+                       {% for candidate in election.candidate_names %} 
+                            <li> {{ candidate }} </li>
+                       {% endfor %}
+                    </ul> -->
+                </ul>
+            </div>  
+
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endif %}
+
+{% endblock content %}

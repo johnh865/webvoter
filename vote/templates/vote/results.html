@@ -1,0 +1,47 @@
+{% extends "vote/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<h1>Poll Results - {{ post.method_name }} </h1>
+<h2> {{ post.election.description }} </h2>
+<p class="text-left"> {{ post.write_text_winner | safe }} </p>
+<p class="text-left"> {{ post.write_text_ties | safe }} </p>
+
+
+    {% for plot in bokeh_plots %}
+        {{plot | safe}}
+    {% endfor %}
+
+    <br>
+    <div class="content-section">
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <button class="btn btn-outline-info" name="vote" type="submit">Vote!</button>
+            </div><br>
+
+
+            {{ form | crispy }}
+
+
+            <div class="form-group">
+                <button class="btn btn-outline-info" name="submit" type="submit">Recalculate</button>
+            </div><br>
+        </form>
+    </div>
+
+
+    <h3>Method Code Output</h3>
+    <div class="container">
+    <!-- Below is a sample output text displayed  
+        using the samp tags -->
+        <pre> 
+            {{ output | safe }}
+        </pre> 
+    </div>
+
+    <br>
+
+
+
+{% endblock content %}

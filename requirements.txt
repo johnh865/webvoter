@@ -1,0 +1,6 @@
+django
+django-crispy-forms
+git+https://github.com/johnh865/election_sim.git
+python-dotenv
+bokeh
+numpy

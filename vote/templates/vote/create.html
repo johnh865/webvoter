@@ -1,0 +1,36 @@
+{% extends "vote/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="content-section">
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Election Form -->
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Create Poll</legend>
+                {{ e_form|crispy }}
+            </fieldset>
+
+            <div class="form-group">
+                <button class="btn btn-outline-info" name="candidate_update" type="submit">Update</button>
+            </div>
+
+            <!-- Candidates Forms -->
+            <fieldset class="form-group">
+                <legend class="border-bottom mb-4">Candidates</legend>
+                {% for c_form in c_forms %}
+                    {{ c_form | crispy }}
+                {% endfor %}
+            </fieldset>
+
+            <div class="form-group">
+                <button class="btn btn-outline-info" name="submit" type="submit">Create Election</button>
+            </div>
+
+
+        </form>
+    </div>
+
+
+{% endblock content %}

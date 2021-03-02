@@ -1,0 +1,8 @@
+*.sqlite3
+.venv/
+.env
+.spyproject/
+vote/migrations/????_*
+# Ignore cache
+**/__pycache__/*
+**/__pycache__/
