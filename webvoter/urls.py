@@ -16,17 +16,25 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 import vote.views
+from django.views.generic import TemplateView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('', vote.views.create_election, name='create-election'),
     path('', vote.views.CreateElectionView.as_view(), name='create-election'),
-    
-    path('<int:election_id>/', vote.views.create_ballot, name='create-ballot'),
-    path('<int:election_id>/results/<str:etype>/', vote.views.ResultsView.as_view(), name='view-results-etype'),
-    # path('<int:election_id>/results/', vote.views.view_results, name='view-results'),
-    path('<int:election_id>/results/', vote.views.ResultsView.as_view(), name='view-results'),
-
     path('view/', vote.views.ElectionListView.as_view(), name='view'),
-    path('test/', vote.views.test_crispy, name='test-crispy'),
+    path('about/', TemplateView.as_view(template_name='vote/about.html'), name='about'),
+
+    path('<int:election_id>/', vote.views.create_ballot, name='create-ballot'),
+    path('<int:election_id>/results/',
+         vote.views.ResultsView.as_view(),
+         name='view-results'),
+    path('<int:election_id>/results/<str:etype>/',
+         vote.views.ResultsView.as_view(),
+         name='view-results-etype'),
+    path('<int:election_id>/results/<str:etype>/<int:numwinners>/',
+         vote.views.ResultsView.as_view(),
+         name='view-results-etype-numwinners'),
+
+
 ]

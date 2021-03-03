@@ -104,6 +104,8 @@ def create_ballot(request, election_id: int):
             return response
         else:
             messages.error(request, 'Invalid form submission.')
+            for value in form.errors.values():
+                messages.error(request, str(value))
             return redirect('create-ballot', election_id=election.pk)
 
     # Render ballot if user has not yet voted.

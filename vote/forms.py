@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.utils.safestring import mark_safe
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 # from crispy_forms.helper import FormHelper
 # from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Row, Column
@@ -98,7 +99,7 @@ class RankForm(forms.Form):
         cleaned_data = super().clean()
         used_ranks = set()
         for key, value in cleaned_data.items():
-            if value != 0:
+            if str(value) != "0":
                 if value in used_ranks:
                     raise ValidationError('Ranks above "worst" cannot be repeated.')
                 else:
@@ -173,7 +174,7 @@ class ScoreForm(forms.Form):
 
 
 def get_ballot_form(candidates : 'QuerySet[Candidate]', *args, **kwargs):
-    """Function to retrieve the right form given a query of candidates.""" 
+    """Function to retrieve the right form given a query of candidates."""
     candidate = candidates.first()
     election = candidate.election
     ballot_type = election.ballot_type_str()
@@ -203,11 +204,17 @@ class RecalculateForm(forms.Form):
 
         self.etype_dict = etype_dict
 
-        choice = forms.ChoiceField(
+        etype = forms.ChoiceField(
             label = 'Recalculate results using different voting method...',
             choices = zip(etype_dict.values(), etype_dict.keys()),
         )
-        self.fields['etype'] = choice
+        max_winner = election.num_candidates - 1
+        numwinners = forms.IntegerField(
+            label = 'New number of winners',
+            validators = [MaxValueValidator(max_winner), MinValueValidator(1)],
+        )
+        self.fields['etype'] = etype
+        self.fields['numwinners'] = numwinners
 
 
 

@@ -1,12 +1,14 @@
 from itertools import cycle
 import logging
-
+import textwrap
 import numpy as np
 import votesim
 from vote import voting
 from vote.models import Election, Candidate, SCORE_MAX
 
 from bokeh.plotting import figure
+from bokeh.palettes import RdYlBu
+
 from bokeh.embed import file_html, components
 from bokeh.resources import CDN
 from bokeh.models import ColumnDataSource, LinearColorMapper, ColorBar
@@ -24,13 +26,12 @@ class PostElection:
         Election Method type to postprocess data. Set to None to use the method specified for election.
     """
 
-    def __init__(self, election_id : int, etype: str=None):
+    def __init__(self, election_id : int, etype: str=None, numwinners: int=None):
         self.election = Election.objects.get(pk=election_id)
         if etype is None or etype == '':
             method_id = self.election.method
             method_name = self.election.method_str()
             etype = voting.all_method_etype_list[method_id]
-
         else:
             method_name = voting.all_methods_inv[etype]
 
@@ -40,7 +41,12 @@ class PostElection:
         self.candidate_names = np.array(self.candidate_names)
         self.method_name = method_name
 
-        numwinners = self.election.num_winners
+        self.scoremax = self._get_tally_maxscore()
+
+
+        if numwinners is None:
+            numwinners = self.election.num_winners
+        self.numwinners = numwinners
 
         self.erunner = votesim.votemethods.eRunner(etype=etype, numwinners=numwinners, ballots=self.data)
         logging.debug(self.erunner.output)
@@ -50,10 +56,16 @@ class PostElection:
         logger.debug('tie_indices=%s', tie_indices)
         tie_indices = np.array(tie_indices, dtype=int)
 
-
         self.winners = self.candidate_names[winner_indices]
         self.ties = self.candidate_names[tie_indices]
 
+
+    def _get_tally_maxscore(self):
+        if self.election.method == voting.ID_SINGLE:
+            scoremax= 1
+        else:
+            scoremax = SCORE_MAX
+        return scoremax
 
 
     def write_text_winner(self):
@@ -152,7 +164,7 @@ class PostElection:
             return [self.plot_margin_matrix()]
 
         elif etype == votesim.votemethods.BORDA:
-            return [self.plot_tally()]
+            return [self.plot_score()]
 
         elif etype == votesim.votemethods.SMITH_SCORE:
             return [self.plot_margin_matrix()]
@@ -175,7 +187,7 @@ class PostElection:
             tally = output['tally']
 
         title = 'Ballot Tally'
-        return plot_tally_html(names, tally, title=title)
+        return self.plot_runoff_html(names, tally, title=title)
 
 
 
@@ -190,7 +202,7 @@ class PostElection:
 
         title = 'Ballot Average Score'
         tally = tally / self.voter_num
-        return plot_tally_html(names, tally, title=title)
+        return self.plot_score_html(names, tally, title=title)
 
 
     def plot_runoff(self):
@@ -199,7 +211,7 @@ class PostElection:
         tally = output['runoff_tally']
         names = self.candidate_names[candidate_indices]
         title = 'Runoff Tally'
-        return plot_tally_html(names, tally, title=title)
+        return self.plot_runoff_html(names, tally, title=title)
 
 
     def plot_runoff_star(self):
@@ -212,13 +224,14 @@ class PostElection:
 
         title = 'STAR Runoff Tally'
         names = self.candidate_names[candidate_indices]
-        return plot_tally_html(names, tally, title=title)
+        return self.plot_runoff_html(names, tally, title=title)
 
 
 
     def plot_irv(self, title='Accumulated Votes for Each Round'):
         names = self.candidate_names
         output = self.erunner.output
+        voter_num = self.voter_num
         logger.debug('IRV data')
         logger.debug(self.data)
         logger.debug('IRV data shape = %s', self.data.shape)
@@ -235,28 +248,55 @@ class PostElection:
             plot_height=500,
             plot_width=800,
             title=title,
+            tools='save',
+            tooltips = [
+                ('candidate', '@names'),
+                ('net votes', '@right'),
+                ('round', '@round'),
+            ]
         )
-        print('history')
-        print(history)
-        for votes in history:
+
+        for ii, votes in enumerate(history):
             delta = votes - left
             delta = np.maximum(0, delta)
             right = left + delta
+            vote_percent = right / voter_num * 100
 
-            data = dict(names=names, left=left, right=right)
+            labels = []
+            round = []
+            for ileft, idelta, vp in zip(left, delta, vote_percent):
+                if idelta ==0 or np.isnan(idelta):
+                    labels.append('')
+                    round.append('')
+                else:
+                    labels.append(f'  R{ii+1} - {vp:2.1f}%')
+                    round.append(ii+1)
+
+            data = dict(names=names, left=left, right=right, labels=labels, round=round)
+            data = ColumnDataSource(data=data)
             plot.hbar(
                 y = 'names',
                 left = 'left',
                 right = 'right',
-                source = ColumnDataSource(data=data),
+                source = data,
                 height = 0.5,
                 fill_color = next(colors),
             )
             left = right
+
+            plot.text(
+                source=data, y='names', x='left',
+                text='labels',
+                text_align='left',
+                text_baseline='middle',
+                text_font_size='12px',
+            )
+
         plot.xaxis.axis_label_text_font_size = '12pt'
         plot.xaxis.major_label_text_font_size = '12pt'
         plot.yaxis.axis_label_text_font_size = '12pt'
         plot.yaxis.major_label_text_font_size = '12pt'
+        plot.xaxis.axis_label = 'Net Votes For Each Round R'
 
         html = file_html(plot, CDN, title=title)
         return html
@@ -266,89 +306,179 @@ class PostElection:
         names = self.candidate_names
         output = self.erunner.output
         matrix = output['vote_matrix']
-        return plot_margin_matrix_html(names, matrix, title='Head-to-Head Vote Margins')
+        return self.plot_margin_matrix_html(names, matrix, title='Head-to-Head Vote Margins')
 
 
+    def plot_margin_matrix_html(self, names, vote_matrix, width=800, title=''):
+        candidates1, candidates2 = np.meshgrid(names, names)
+        max_name_len = max(len(c) for c in names)
+        vote_matrix = np.asarray(vote_matrix)
+        voter_num  = self.voter_num
+        margins = (vote_matrix - vote_matrix.T) / voter_num * 100
+        height = len(names) * 90 + max_name_len * 5
+
+        votes_for = np.ravel(vote_matrix)
+        votes_against = np.ravel(vote_matrix.T)
+        candidates2 = candidates2.ravel()
+        candidates1 = candidates1.ravel()
 
 
+        margins = margins.ravel()
+        # texts = ['{0:+0.0f}%'.format(t) for t in margins]
+        texts = []
+        for c2, c1, margin in zip(candidates2, candidates1, margins):
+            if c1 == c2:
+                texts.append('-')
+            else:
+                texts.append(f'{margin:+0.0f}%')
 
+        data = dict(
+            candidate=candidates2,
+            against_candidate=candidates1,
+            margins=margins,
+            votes_for=votes_for,
+            votes_against=votes_against,
+            texts = texts,
+            )
 
-def plot_tally_html(names, tally, height=500, width=800, title='', ):
-    """Write html for tally plot."""
-    data = dict(names=names, tally=tally)
-    plot = figure(
-        y_range = names,
-        plot_height=height,
-        plot_width=width,
-        title=title,
-    )
-    plot.hbar(
-        y = 'names',
-        right = 'tally',
-        source = ColumnDataSource(data=data),
-        height=0.5,
+        # Some colors from bokeh docs
+        # colors = ["#75968f", "#a5bab7", "#c9d9d3", "#e2e2e2", "#dfccce", "#ddb7b1", "#cc7878", "#933b41", "#550b1d"]
+        # colors.reverse()
+        # mapper = LinearColorMapper(palette=colors, low=margins.min(), high=margins.max())
+        mapper = LinearColorMapper(palette=RdYlBu[11], low=50, high=-50)
+        print(data)
+        plot = figure(
+            y_range = names,
+            x_range = names,
+            plot_height=height,
+            plot_width=width,
+            title=title,
+            tools='save',
+            tooltips = [
+                ('candidate', '@candidate'),
+                ('against', '@against_candidate'),
+                ('votes for', '@votes_for'),
+                ('votes against', '@votes_against'),
+            ]
         )
-    plot.xaxis.axis_label_text_font_size = '12pt'
-    plot.xaxis.major_label_text_font_size = '12pt'
-    plot.yaxis.axis_label_text_font_size = '12pt'
-    plot.yaxis.major_label_text_font_size = '12pt'
+        plot.rect(
+            source=data, y='candidate', x='against_candidate', width=1, height=1,
+            fill_color={'field': 'margins', 'transform': mapper},
+            line_color="#111111",
+            )
 
-    html = file_html(plot, CDN, title=title)
-    return html
-
-
-def plot_margin_matrix_html(names, vote_matrix, height=500, width=800, title=''):
-    candidates1, candidates2 = np.meshgrid(names, names)
-    vote_matrix = np.asarray(vote_matrix)
-    margins = vote_matrix - vote_matrix.T
-
-    votes_for = np.ravel(vote_matrix)
-    votes_against = np.ravel(vote_matrix.T)
-    margins = margins.ravel()
-    texts = ['{0:+0.0f}'.format(t) for t in margins]
-    data = dict(
-        candidate=candidates2.ravel(),
-        against_candidate=candidates1.ravel(),
-        margins=margins,
-        votes_for=votes_for,
-        votes_against=votes_against,
-        texts = texts,
+        plot.text(
+            source=data, y='candidate', x='against_candidate',
+            text='texts',
+            text_align='center',
+            text_baseline='middle',
+            text_font_size='18px',
         )
+        plot.xaxis.axis_label_text_font_size = '12pt'
+        plot.xaxis.major_label_text_font_size = '12pt'
+        plot.xaxis.major_label_orientation = np.pi / 2
+        plot.xaxis.axis_label = '...Against Candidate'
 
-    # Some colors from bokeh docs
-    colors = ["#75968f", "#a5bab7", "#c9d9d3", "#e2e2e2", "#dfccce", "#ddb7b1", "#cc7878", "#933b41", "#550b1d"]
-    colors.reverse()
-    mapper = LinearColorMapper(palette=colors, low=margins.min(), high=margins.max())
-    print(data)
-    plot = figure(
-        y_range = names,
-        x_range = names,
-        plot_height=height,
-        plot_width=width,
-        title=title,
-        tooltips = [
-            ('candidate', '@candidate'),
-            ('against', '@against_candidate'),
-            ('votes for', '@votes_for'),
-            ('votes against', '@votes_against'),
-        ]
-    )
-    plot.rect(
-        source=data, y='candidate', x='against_candidate', width=1, height=1,
-        fill_color={'field': 'margins', 'transform': mapper},
-        line_color=None,
+        plot.yaxis.axis_label_text_font_size = '12pt'
+        plot.yaxis.major_label_text_font_size = '12pt'
+        plot.yaxis.axis_label = 'Candidate Vote Margin...'
+        html = file_html(plot, CDN, title=title)
+        return html
+
+
+    def plot_score_html(self, names, tally, width=800, title='', ):
+        """Write html for tally plot."""
+        scoremax = self.scoremax
+        rating = tally / scoremax * 100
+        texts = []
+        height = len(names) * 60 + 60
+
+        for t, r in zip(tally, rating):
+            texts.append(f'  {r:0.1f}% ({t:0.2f} / {scoremax:0.0f})  ')
+
+        data = dict(candidate=names, tally=tally, rating=rating, texts=texts)
+        data = ColumnDataSource(data=data)
+        plot = figure(
+            y_range = names,
+            plot_height=height,
+            plot_width=width,
+            title=title,
+            tools='save',
+            tooltips = [
+                ('candidate', '@candidate'),
+                ('rating %', '@rating'),
+                ('average score', '@tally'),
+            ]
         )
+        plot.hbar(
+            y = 'candidate',
+            right = 'rating',
+            source = data,
+            height=0.75,
+            )
+        plot.text(
+            source=data,
+            y='candidate',
+            x = 'rating',
+            text='texts',
+            text_align='right',
+            text_baseline='middle',
+            text_font_size='12px',
+            color = '#FFFFFF'
+        )
+        plot.xaxis.axis_label_text_font_size = '12pt'
+        plot.xaxis.major_label_text_font_size = '12pt'
+        plot.yaxis.axis_label_text_font_size = '12pt'
+        plot.yaxis.major_label_text_font_size = '12pt'
 
-    plot.text(
-        source=data, y='candidate', x='against_candidate',
-        text='texts',
-        text_align='center',
-        text_baseline='middle',
-        text_font_size='18px',
-    )
-    plot.xaxis.axis_label_text_font_size = '12pt'
-    plot.xaxis.major_label_text_font_size = '12pt'
-    plot.yaxis.axis_label_text_font_size = '12pt'
-    plot.yaxis.major_label_text_font_size = '12pt'
-    html = file_html(plot, CDN, title=title)
-    return html
+        html = file_html(plot, CDN, title=title)
+        return html
+
+
+    def plot_runoff_html(self, names, tally, width=800, title='', ):
+        """Write html for runoff tally plot."""
+        net_votes = np.sum(tally)
+        height = len(names) * 60 + 60
+        
+        rating = tally  / net_votes * 100
+        texts = []
+        for t, r in zip(tally, rating):
+            texts.append(f'  {r:0.1f}% ({t:0.0f} Votes)  ')
+
+        data = dict(candidate=names, tally=tally, rating=rating, texts=texts)
+        data = ColumnDataSource(data=data)
+        plot = figure(
+            y_range = names,
+            plot_height=height,
+            plot_width=width,
+            title=title,
+            tools='save',
+            tooltips = [
+                ('candidate', '@candidate'),
+                ('votes %', '@rating'),
+                ('# of votes', '@tally'),
+            ]
+        )
+        plot.hbar(
+            y = 'candidate',
+            right = 'rating',
+            source = data,
+            height=0.75,
+            )
+        plot.text(
+            source=data,
+            y='candidate',
+            x = 'rating',
+            text='texts',
+            text_align='right',
+            text_baseline='middle',
+            text_font_size='12px',
+            color = '#FFFFFF'
+        )
+        plot.xaxis.axis_label_text_font_size = '12pt'
+        plot.xaxis.major_label_text_font_size = '12pt'
+        plot.yaxis.axis_label_text_font_size = '12pt'
+        plot.yaxis.major_label_text_font_size = '12pt'
+
+        html = file_html(plot, CDN, title=title)
+        return html
