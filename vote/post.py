@@ -29,9 +29,8 @@ class PostElection:
     def __init__(self, election_id : int, etype: str=None, numwinners: int=None):
         self.election = Election.objects.get(pk=election_id)
         if etype is None or etype == '':
-            method_id = self.election.method
+            etype = self.election.etype
             method_name = self.election.method_str()
-            etype = voting.all_method_etype_list[method_id]
         else:
             method_name = voting.all_methods_inv[etype]
 
@@ -61,7 +60,7 @@ class PostElection:
 
 
     def _get_tally_maxscore(self):
-        if self.election.method == voting.ID_SINGLE:
+        if self.election.ballot_type == voting.ID_SINGLE:
             scoremax= 1
         else:
             scoremax = SCORE_MAX
@@ -150,7 +149,8 @@ class PostElection:
             return [self.plot_score()]
 
         elif (etype == votesim.votemethods.IRV or
-              etype == votesim.votemethods.IRV_STV):
+              etype == votesim.votemethods.IRV_STV or
+              etype == votesim.votemethods.STV_GREGORY):
             return [self.plot_irv()]
 
         elif etype == votesim.votemethods.STAR:

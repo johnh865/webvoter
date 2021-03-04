@@ -47,3 +47,10 @@ proportionate representation when selecting multiple winners. These methods incl
   - [Sequential Monroe Voting](https://electowiki.org/wiki/Sequential_Monroe_voting)
 
 
+Source Code
+-----------
+Source code for the WebVoter webapp, as well as the voting engine, can be found 
+on Github:
+
+ - [votesim Python Package](https://github.com/johnh865/election_sim)
+ - [Site source code](https://github.com/johnh865/webvoter)

@@ -20,7 +20,7 @@ from vote import voting
 class ElectionCreateForm(forms.ModelForm):
     class Meta:
         model = Election
-        fields = ['description', 'method', 'num_winners', 'num_candidates']
+        fields = ['description', 'etype', 'num_winners', 'num_candidates']
 
 
 class CandidateCreateForm(forms.ModelForm):

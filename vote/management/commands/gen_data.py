@@ -4,6 +4,7 @@ from vote import models
 from vote import voting
 import votesim
 from votesim.models import spatial
+from django.core.management.base import BaseCommand
 
 def get_user_bots(num:int):
     """Create or get user bots."""
@@ -27,10 +28,9 @@ def gen_irv_data():
         [[4, 3, 2, 1]]*17
     ballot_data = np.array(d)
 
-    method = voting.NAME_IRV
-    method_id = voting.get_method_id(method)
-
-    e1 = models.Election(method=method_id, ballot_type=voting.ID_RANK, description='test irv: Favorite Book?', num_candidates=4)
+    name = voting.NAME_IRV
+    etype = voting.get_method_id(name)
+    e1 = models.Election(etype=etype, ballot_type=voting.ID_RANK, description='test irv: Favorite Book?', num_candidates=4)
     e1.save()
     c1 = models.Candidate(name='Game of Thrones', election=e1)
     c2 = models.Candidate(name='Hunger Games', election=e1)
@@ -73,10 +73,9 @@ def gen_irv_data2():
         strategies=(),
     )
 
-    method = voting.NAME_IRV
-    method_id = voting.get_method_id(method)
-
-    e1 = models.Election(method=method_id, ballot_type=voting.ID_RANK, description='test irv: Favorite Fruit?', num_candidates=num_candidates)
+    name = voting.NAME_IRV
+    etype = voting.get_method_id(name)
+    e1 = models.Election(etype=etype, ballot_type=voting.ID_RANK, description='test irv: Favorite Fruit?', num_candidates=num_candidates)
     e1.save()
     c1 = models.Candidate(name='Apples', election=e1)
     c2 = models.Candidate(name='Bananas', election=e1)
@@ -116,10 +115,9 @@ def gen_score_data():
         strategies=(),
     )
 
-    method = voting.NAME_SCORE
-    method_id = voting.get_method_id(method)
-
-    e1 = models.Election(method=method_id, ballot_type=voting.ID_RANK, description='test score: Favorite City?', num_candidates=num_candidates)
+    name = voting.NAME_SCORE
+    etype = voting.get_method_id(name)
+    e1 = models.Election(etype=etype, ballot_type=voting.ID_RANK, description='test score: Favorite City?', num_candidates=num_candidates)
     e1.save()
     c1 = models.Candidate(name='Tokyo', election=e1)
     c2 = models.Candidate(name='New York', election=e1)
@@ -144,5 +142,24 @@ def gen_score_data():
             rank_ballot.save()
 
 
+def build():
+    elections = models.Election.objects.filter(description='test score: Favorite City?').all()
+    if len(elections) > 0:
+        return
+    else:
+        gen_irv_data()
+        gen_irv_data2()
+        gen_score_data()
+    return
+
+
+class Command(BaseCommand):
+    help = 'Create fake election data with bots'
+
+    def handle(self, *args, **kwargs):
+        build()
+
+
+
 if __name__ == '__main__':
-    gen_irv_data()
+    build()

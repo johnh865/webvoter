@@ -126,8 +126,8 @@ class CreateElectionView(View):
         if 'submit' in request.POST and e_form.is_valid():
             election = c_handler.save()
 
-            method_id = e_form.cleaned_data.get('method')
-            method = voting.all_method_names[method_id]
+            etype = e_form.cleaned_data.get('etype')
+            method = voting.all_methods_inv[etype]
             messages.success(request, f'You have successfully created a {method} election.')
             return redirect('create-ballot', election_id=election.pk)
 
@@ -155,8 +155,8 @@ def create_election(request):
         if 'submit' in request.POST and e_form.is_valid():
             election = c_handler.save()
 
-            method_id = e_form.cleaned_data.get('method')
-            method = voting.all_method_names[method_id]
+            etype = e_form.cleaned_data.get('etype')
+            method = voting.all_methods_inv[etype]
             messages.success(request, f'You have successfully created a {method} election.')
             return redirect('create-ballot', election_id=election.pk)
 
