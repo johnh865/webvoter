@@ -5,3 +5,8 @@ bokeh
 numpy
 markdown
 git+https://github.com/johnh865/election_sim.git
+
+
+# Heroku Stuff
+gunicorn
+django-heroku
