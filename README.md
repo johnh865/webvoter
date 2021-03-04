@@ -16,6 +16,12 @@ the app.
 	python manage.py migrate
 	python manage.py gen_data
 
+
+You also need to create a `.env` file in the app root folder and set a secret key:
+
+    SECRET_KEY = 'THIS IS MY SECRET KEY' > .env
+
+
 To run the django app on your local machine, use command:
 
 	python manage.py runserver
