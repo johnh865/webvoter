@@ -13,7 +13,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 # from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Row, Column
 # from crispy_forms.bootstrap import InlineRadios, Div
 
-from vote.models import Election, Candidate, VoteBallot, RankBallot, Voter, SCORE_MAX
+from vote.models import (Election, Candidate, VoteBallot, RankBallot, Voter,
+    SCORE_MAX, user_is_anonymous, get_or_create_voter)
 from vote import voting
 
 
@@ -23,7 +24,16 @@ class ElectionCreateForm(forms.ModelForm):
         fields = ['description', 'etype', 'num_winners', 'num_candidates']
 
 
-class CandidateCreateForm(forms.ModelForm):
+    def clean(self):
+        """Make sure num_candidates and num_winners is consistent."""
+        cleaned_data = super().clean()
+        num_candidates = cleaned_data['num_candidates']
+        num_winners = cleaned_data['num_winners']
+        if num_winners >= num_candidates:
+            raise ValidationError('Number of winners must be less than the number of candidates.')
+
+
+class CandidateCreateForm00(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(CandidateCreateForm, self).__init__(*args, **kwargs)
         self.fields['name'].required = False
@@ -31,6 +41,47 @@ class CandidateCreateForm(forms.ModelForm):
     class Meta:
         model = Candidate
         fields = ['name']
+
+class CandidateCreateForm(forms.Form):
+    """WARNING THIS FORM ISN'T USED YET BUT PROBABLY WILL BE BETTER THAN THE ONE WE HAVE NOW"""
+    def __init__(self, num_candidates: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._field_names = self.get_field_names(num_candidates)
+
+        for field_name in self._field_names:
+            field = forms.CharField(label='Candidate', max_length=100, )
+            self.fields[field_name] = field
+            self._field_names.append(field_name)
+
+
+    def save(self, election: Election):
+        for field_name in self._field_names:
+            name = self.cleaned_data[field_name]
+            candidate = Candidate(name=name, election=election)
+            candidate.save()
+
+
+    @staticmethod
+    def get_field_names(num: int):
+        """Retrieve the field names for this form. Is a static method."""
+        return [f'candidate_{ii}' for ii in range(num)]
+
+
+    def clean(self):
+        """Make candidates are filled in and unique."""
+        cleaned_data = super().clean()
+
+        used_candidates = set()
+        for value in cleaned_data.values():
+            name = value.strip()
+            if len(name) == 0:
+                raise ValidationError('Candidate name cannot be empty.')
+            if name in used_candidates:
+                raise ValidationError('No duplicate candidate names allowed.')
+            else:
+                used_candidates.add(name)
+        return cleaned_data
 
 
 class VoteForm(forms.Form):
@@ -50,19 +101,21 @@ class VoteForm(forms.Form):
 
 
     def save(self, user: User):
-        print(dir(self))
         candidate_id = self.cleaned_data['candidate_id']
         candidate = self._candidates.get(pk=candidate_id)
         election = candidate.election
-        try:
-            voter  = Voter.objects.get(election=election, user=user)
-        except Voter.DoesNotExist:
-            voter = Voter(election=election, user=user)
-            voter.save()
-
+        voter = get_or_create_voter(election, user)
         v = VoteBallot(vote=True, election=candidate.election, candidate=candidate, voter=voter)
         v.save()
         return
+
+
+def _validate_rank_form_all_zeros(cleaned_data: dict):
+    """Make sure ballot is not all zeros!"""
+    for value in cleaned_data.values():
+        if str(value) != "0":
+            return True
+    raise ValidationError('At least one candidate must be ranked or rated better than worst.')
 
 
 class RankForm(forms.Form):
@@ -104,19 +157,14 @@ class RankForm(forms.Form):
                     raise ValidationError('Ranks above "worst" cannot be repeated.')
                 else:
                     used_ranks.add(value)
-        return
+        _validate_rank_form_all_zeros(cleaned_data)
+        return cleaned_data
 
 
     def save(self, user: User):
         candidates = self._candidates
         election = candidates.first().election
-
-        # Get the voter who is voting.
-        try:
-            voter  = Voter.objects.get(election=election, user=user)
-        except Voter.DoesNotExist:
-            voter = Voter(election=election, user=user)
-            voter.save()
+        voter = get_or_create_voter(election, user)
 
         for candidate in candidates:
             candidate_id  = candidate.pk
@@ -173,6 +221,12 @@ class ScoreForm(forms.Form):
         return
 
 
+    def clean(self):
+        cleaned_data = super().clean()
+        _validate_rank_form_all_zeros(cleaned_data)
+        return cleaned_data
+
+
 def get_ballot_form(candidates : 'QuerySet[Candidate]', *args, **kwargs):
     """Function to retrieve the right form given a query of candidates."""
     candidate = candidates.first()
@@ -215,17 +269,4 @@ class RecalculateForm(forms.Form):
         )
         self.fields['etype'] = etype
         self.fields['numwinners'] = numwinners
-
-
-
-
-class ExampleForm(forms.Form):
-    choice = forms.ChoiceField(
-        label = 'test',
-        choices = zip([1,2,3], ['a','b','c']),
-        widget = forms.RadioSelect(
-            attrs = {'class' : 'form-check-input'}
-        )
-    )
-
 

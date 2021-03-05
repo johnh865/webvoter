@@ -3,16 +3,18 @@ import logging
 import textwrap
 import numpy as np
 import votesim
+import markdown
+
+
 from vote import voting
 from vote.models import Election, Candidate, SCORE_MAX
 
 from bokeh.plotting import figure
 from bokeh.palettes import RdYlBu
-
 from bokeh.embed import file_html, components
 from bokeh.resources import CDN
 from bokeh.models import ColumnDataSource, LinearColorMapper, ColorBar
-import markdown
+
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,21 @@ class PostElection:
             method_name = voting.all_methods_inv[etype]
 
         self.etype = etype
-        self.data, self.candidate_ids, self.voter_num = self._get_data()
+
+        if numwinners is None:
+            numwinners = self.election.num_winners
+        self.numwinners = numwinners
+
+        self.candidate_ids = self._get_candidate_ids()
+        self.data, self.voter_num = self._get_data()
+
+        ## CHECK FOR POST ERRORS
+        if self.data.size == 0:
+            self.error_no_voters = True
+            return
+        else:
+            self.error_no_voters = False
+
         self.candidate_names = [Candidate.objects.get(pk=ii).name for ii in self.candidate_ids]
         self.candidate_names = np.array(self.candidate_names)
         self.method_name = method_name
@@ -43,13 +59,11 @@ class PostElection:
         self.scoremax = self._get_tally_maxscore()
 
 
-        if numwinners is None:
-            numwinners = self.election.num_winners
-        self.numwinners = numwinners
+
 
         self.erunner = votesim.votemethods.eRunner(etype=etype, numwinners=numwinners, ballots=self.data)
         logging.debug(self.erunner.output)
-        winner_indices  = self.erunner.winners_no_ties
+        winner_indices  = np.asarray(self.erunner.winners_no_ties, dtype=int)
         logging.debug('Winners indices = %s', winner_indices)
         tie_indices = self.erunner.ties
         logger.debug('tie_indices=%s', tie_indices)
@@ -97,14 +111,18 @@ class PostElection:
         return markdown.markdown(s)
 
 
+    def _get_candidate_ids(self):
+        candidates = self.election.candidate_set.all()
+        candidate_ids = [c.id for c in candidates]
+        return candidate_ids
+
 
 
     def _get_data(self):
         """Get candidate data and candidate id's."""
         election = self.election
         # Get the candidates
-        candidates = election.candidate_set.all()
-        candidate_ids = [c.id for c in candidates]
+        candidate_ids = self.candidate_ids
         candidate_num = len(candidate_ids)
         candidate_ids_index = np.arange(candidate_num)
 
@@ -133,9 +151,14 @@ class PostElection:
 
         voter_num = len(ballots_voter_ids_unique)
         data = np.zeros((voter_num, candidate_num))
-        data[inv_index, candidate_id_index] = ballots_votes
+        if data.size > 0:
+            data[inv_index, candidate_id_index] = ballots_votes
 
-        return data, candidate_ids, voter_num
+        # Make sure ranked ballots are correctly ordered.
+        if election.ballot_type == voting.ID_RANK:
+            data = votesim.votemethods.tools.rcv_reorder(data)
+
+        return data, voter_num
 
 
     def get_plots(self):
@@ -151,6 +174,7 @@ class PostElection:
         elif (etype == votesim.votemethods.IRV or
               etype == votesim.votemethods.IRV_STV or
               etype == votesim.votemethods.STV_GREGORY):
+            logger.debug('Getting IRV styl plots')
             return [self.plot_irv()]
 
         elif etype == votesim.votemethods.STAR:
@@ -160,7 +184,9 @@ class PostElection:
             return [self.plot_tally(), self.plot_runoff()]
 
         elif (etype == votesim.votemethods.RANKED_PAIRS or
-              etype == votesim.votemethods.SMITH_MINIMAX  ):
+              etype == votesim.votemethods.SMITH_MINIMAX or
+              etype == votesim.votemethods.COPELAND or
+              etype == votesim.votemethods.BLACK ):
             return [self.plot_margin_matrix()]
 
         elif etype == votesim.votemethods.BORDA:

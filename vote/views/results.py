@@ -36,13 +36,21 @@ class ResultsView(View):
 
     def get(self, request, election_id, etype=None, numwinners=None, *args, **kwargs):
         post = PostElection(election_id=election_id, etype=etype, numwinners=numwinners)
-        plots = post.get_plots()
+        election = post.election
+
         form = RecalculateForm(
             post.election,
             initial={'etype' : post.etype, 'numwinners' : post.numwinners}
         )
-        # markdown = post.markdown
 
+        # Check for post errors
+        if post.error_no_voters:
+            messages.error(request, 'No voter ballots found for this election!')
+            context = {'form' : form}
+            return render(request, 'vote/results.html', context=context)
+
+        # Return pot output
+        plots = post.get_plots()
         context = {
             'post' : post,
             'bokeh_plots' : plots,
@@ -56,12 +64,18 @@ class ResultsView(View):
         election = Election.objects.get(pk=election_id)
         form = RecalculateForm(election, data=request.POST)
 
-        if 'submit' in request.POST and form.is_valid():
-            etype = form.cleaned_data['etype']
-            numwinners = form.cleaned_data['numwinners']
-            kwargs['etype'] = etype
-            kwargs['numwinners'] = numwinners
-            return redirect('view-results-etype-numwinners', election_id=election_id, *args, **kwargs)
+        if 'submit' in request.POST:
+            if form.is_valid():
+                etype = form.cleaned_data['etype']
+                numwinners = form.cleaned_data['numwinners']
+                kwargs['etype'] = etype
+                kwargs['numwinners'] = numwinners
+                return redirect('view-results-etype-numwinners', election_id=election_id, *args, **kwargs)
+            else:
+                messages.error(request, 'Invalid form submission.')
+                for key, value in form.errors.items():
+                    messages.error(request, key + ' - ' + str(value))
+                return redirect('view-results-etype-numwinners', election_id=election_id, *args, **kwargs)
 
         elif 'vote' in request.POST:
             # kwargs['etype'] = election.get_etype()

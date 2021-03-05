@@ -5,7 +5,7 @@ WebVoter
 
 Webvoter is a simple online tool to create polls and elections using a variety
 of traditional and experimental voting methods. In additional to the traditional
-"first-past-the-post", or plurality, voting method, Webvoter includes:
+"first-past-the-post", or [plurality](https://en.wikipedia.org/wiki/Plurality_(voting)), voting method, WebVoter includes:
 
 Ranked Ballot Methods
 ---------------------
@@ -18,8 +18,11 @@ Ranked methods include:
 
   - [Instant runoff voting (IRV)](https://en.wikipedia.org/wiki/Instant-runoff_voting)
   - Top-two Automatic Runoff
-  - Condorcet-compliant [Smith-minimax](https://electowiki.org/wiki/Smith//Minimax)
-  - Condorcet-complaint [Ranked Pairs](https://en.wikipedia.org/wiki/Ranked_pairs)
+  - Condorcet-compliant methods:
+    * [Ranked Pairs](https://en.wikipedia.org/wiki/Ranked_pairs)
+    * [Smith-minimax](https://electowiki.org/wiki/Smith//Minimax)
+    * [Black](https://en.wikipedia.org/wiki/Black%27s_method)
+    * [Copeland](https://en.wikipedia.org/wiki/Copeland%27s_method)
   - [Borda Count](https://en.wikipedia.org/wiki/Borda_count)
 
 Scored Ballot Methods
@@ -37,12 +40,14 @@ Scored methods include:
   - [STAR voting (Score then Automatic Runoff)](https://en.wikipedia.org/wiki/STAR_voting)
 
 
-Proportionate Representation Methods
+Proportional Representation Methods
 ------------------------------------
 Several voting methods have been devised in order to construct
 proportionate representation when selecting multiple winners. These methods include:
 
   - [Single transferable Vote](https://en.wikipedia.org/wiki/Single_transferable_vote)
+      * [Hare surplus allocation](https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Hare)
+      * [Gregory surplus allocation](https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Gregory)
   - [Reweighted Range Voting](https://electowiki.org/wiki/Reweighted_Range_Voting)
   - [Sequential Monroe Voting](https://electowiki.org/wiki/Sequential_Monroe_voting)
 

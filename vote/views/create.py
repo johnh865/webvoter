@@ -123,58 +123,63 @@ class CreateElectionView(View):
         c_handler = CandidateHandler(request)
         c_forms = c_handler.forms
 
-        if 'submit' in request.POST and e_form.is_valid():
-            election = c_handler.save()
-
-            etype = e_form.cleaned_data.get('etype')
-            method = voting.all_methods_inv[etype]
-            messages.success(request, f'You have successfully created a {method} election.')
-            return redirect('create-ballot', election_id=election.pk)
-
-        elif 'candidate_update' in request.POST:
-            context = {
-                'e_form' : e_form,
-                'c_forms' : c_forms,
-                'elections' : self.get_elections()}
-
-            cnum = request.session[ELECTION_FORM_NAME]['num_candidates']
-            messages.success(request, f'# of Candidates has been updated to {cnum}')
-            return render(request, 'vote/create.html', context)
-
-
-
-def create_election(request):
-    """Create an election"""
-    if request.method == 'POST':
-        e_form = ElectionCreateForm(request.POST)
-        request.session[ELECTION_FORM_NAME] = e_form.data
-
-        c_handler = CandidateHandler(request)
-        c_forms = c_handler.forms
-
-        if 'submit' in request.POST and e_form.is_valid():
-            election = c_handler.save()
-
-            etype = e_form.cleaned_data.get('etype')
-            method = voting.all_methods_inv[etype]
-            messages.success(request, f'You have successfully created a {method} election.')
-            return redirect('create-ballot', election_id=election.pk)
+        if 'submit' in request.POST:
+            if e_form.is_valid():
+                election = c_handler.save()
+                etype = e_form.cleaned_data.get('etype')
+                method = voting.all_methods_inv[etype]
+                messages.success(request, f'You have successfully created a {method} election.')
+                return redirect('create-ballot', election_id=election.pk)
+            else:
+                messages.error(request, 'Invalid form submission.')
+                for key, value in e_form.errors.items():
+                    messages.error(request, key + ' - ' + str(value))
 
         elif 'candidate_update' in request.POST:
-            context = {'e_form' : e_form, 'c_forms' : c_forms}
             cnum = request.session[ELECTION_FORM_NAME]['num_candidates']
-            messages.success(request, f'# of Candidates has been updated to {cnum}')
-            return render(request, 'vote/create.html', context)
+            messages.success(request, f'Number of Candidates has been updated to {cnum}')
 
-    else:
-        if ELECTION_FORM_NAME in request.session:
-            e_form = ElectionCreateForm(initial=request.session[ELECTION_FORM_NAME])
-        else:
-            e_form = ElectionCreateForm(initial=e_init)
+        context = {
+            'e_form' : e_form,
+            'c_forms' : c_forms,
+            'elections' : self.get_elections()}
 
-        c_handler = CandidateHandler(request)
-        c_forms = c_handler.forms
-
-        context = {'e_form' : e_form, 'c_forms' : c_forms}
         return render(request, 'vote/create.html', context)
+
+
+
+# def create_election(request):
+#     """Create an election"""
+#     if request.method == 'POST':
+#         e_form = ElectionCreateForm(request.POST)
+#         request.session[ELECTION_FORM_NAME] = e_form.data
+
+#         c_handler = CandidateHandler(request)
+#         c_forms = c_handler.forms
+
+#         if 'submit' in request.POST and e_form.is_valid():
+#             election = c_handler.save()
+
+#             etype = e_form.cleaned_data.get('etype')
+#             method = voting.all_methods_inv[etype]
+#             messages.success(request, f'You have successfully created a {method} election.')
+#             return redirect('create-ballot', election_id=election.pk)
+
+#         elif 'candidate_update' in request.POST:
+#             context = {'e_form' : e_form, 'c_forms' : c_forms}
+#             cnum = request.session[ELECTION_FORM_NAME]['num_candidates']
+#             messages.success(request, f'# of Candidates has been updated to {cnum}')
+#             return render(request, 'vote/create.html', context)
+
+#     else:
+#         if ELECTION_FORM_NAME in request.session:
+#             e_form = ElectionCreateForm(initial=request.session[ELECTION_FORM_NAME])
+#         else:
+#             e_form = ElectionCreateForm(initial=e_init)
+
+#         c_handler = CandidateHandler(request)
+#         c_forms = c_handler.forms
+
+#         context = {'e_form' : e_form, 'c_forms' : c_forms}
+#         return render(request, 'vote/create.html', context)
 

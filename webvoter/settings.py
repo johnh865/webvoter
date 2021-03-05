@@ -169,4 +169,5 @@ LOGGING = {
     },
 }
 
-django_heroku.settings(locals())
+if HEROKU:
+    django_heroku.settings(locals())

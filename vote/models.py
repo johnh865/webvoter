@@ -34,6 +34,16 @@ def get_or_create_user(name:str):
     return  get_user_model().objects.get_or_create(username=name)[0]
 
 
+def user_is_anonymous(user: User):
+    """Check if user is anonymous."""
+    if user.username == USER_ANONYMOUS:
+        return True
+    return False
+
+
+
+
+
 class Election(models.Model):
     """Basic election storage container."""
     id = models.AutoField(primary_key=True)
@@ -161,7 +171,7 @@ class VoteBallot(models.Model):
 
 
     def __str__(self):
-        return str(self.candidate.name) + '-' + str(self.voter.user.username)
+        return str(self.candidate.name) + '-' + str(self.voter)
 
 
 class RankBallot(models.Model):
@@ -173,4 +183,21 @@ class RankBallot(models.Model):
 
 
     def __str__(self):
-        return str(self.election) + '-' + str(self.candidate.name) + '-' + str(self.voter.user.username)
+        return str(self.candidate.name) + '-' + str(self.voter)
+
+
+
+def get_or_create_voter(election: Election, user: User) -> Voter:
+    """Get or create a voter given an election and user.
+    Handles anonymous voters."""
+
+    if user_is_anonymous(user):
+        voter = Voter(election=election, user=user)
+        voter.save()
+    else:
+        try:
+            voter  = Voter.objects.get(election=election, user=user)
+        except Voter.DoesNotExist:
+            voter = Voter(election=election, user=user)
+            voter.save()
+    return voter
