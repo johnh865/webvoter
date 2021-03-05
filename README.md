@@ -25,3 +25,16 @@ You also need to create a `.env` file in the app root folder and set a secret ke
 To run the django app on your local machine, use command:
 
 	python manage.py runserver
+	
+Environmental Variables
+-----------------------
+- SECRET_KEY -- Django secret key.
+- DEBUG -- Set DEBUG=1 for debug mode.
+- HEROKU -- Set HEROKU=1 to use Heroku postgres database, which is needed to Heroku deployment. 
+
+
+Deployment / Installation Guides
+--------------------------------
+* Getting Heroku to work: https://devcenter.heroku.com/articles/getting-started-with-python
+* Getting Postgres to work on Heroku: https://devcenter.heroku.com/articles/heroku-postgresql
+* Postgres Windows installer: https://www.enterprisedb.com/downloads/postgres-postgresql-downloads

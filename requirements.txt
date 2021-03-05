@@ -10,3 +10,7 @@ git+https://github.com/johnh865/election_sim.git
 # Heroku Stuff
 gunicorn
 django-heroku
+
+# Heroku database
+psycopg2-binary
+dj-database-url
