@@ -2,7 +2,7 @@
 .venv/
 .env
 .spyproject/
-vote/migrations/????_*
+### vote/migrations/????_*
 # Ignore cache
 **/__pycache__/*
 **/__pycache__/
