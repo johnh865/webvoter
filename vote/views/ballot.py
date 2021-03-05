@@ -57,12 +57,12 @@ def user_has_voted(request, election_id: int):
 
 def get_ballot_template(election: Election) -> str:
     """Get html template for the ballot type."""
-    ballot_type = election.ballot_type_str()
-    if ballot_type == 'rank':
+    ballot_type = election.ballot_type
+    if ballot_type == voting.ID_RANK:
         template = 'vote/rank.html'
-    elif ballot_type == 'score':
+    elif ballot_type == voting.ID_SCORE:
         template = 'vote/rank.html'
-    elif ballot_type == 'vote':
+    elif ballot_type == voting.ID_SINGLE:
         template = 'vote/vote.html'
     return template
 
