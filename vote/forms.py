@@ -33,9 +33,15 @@ class ElectionCreateForm(forms.ModelForm):
             raise ValidationError('Number of winners must be less than the number of candidates.')
 
 
+    def get_num_candidates(self):
+        """Get uncleaned number of candidates, before clean and save."""
+        cnum = self.data.get('num_candidates', 2)
+        return int(cnum)
+
+
 class CandidateCreateForm00(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        super(CandidateCreateForm, self).__init__(*args, **kwargs)
+        super(CandidateCreateForm00, self).__init__(*args, **kwargs)
         self.fields['name'].required = False
 
     class Meta:
@@ -43,16 +49,14 @@ class CandidateCreateForm00(forms.ModelForm):
         fields = ['name']
 
 class CandidateCreateForm(forms.Form):
-    """WARNING THIS FORM ISN'T USED YET BUT PROBABLY WILL BE BETTER THAN THE ONE WE HAVE NOW"""
     def __init__(self, num_candidates: int, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(CandidateCreateForm, self).__init__(*args, **kwargs)
 
         self._field_names = self.get_field_names(num_candidates)
-
         for field_name in self._field_names:
             field = forms.CharField(label='Candidate', max_length=100, )
             self.fields[field_name] = field
-            self._field_names.append(field_name)
+            self.fields[field_name].required = False
 
 
     def save(self, election: Election):
@@ -73,8 +77,10 @@ class CandidateCreateForm(forms.Form):
         cleaned_data = super().clean()
 
         used_candidates = set()
+        print('I am the cleaner!')
         for value in cleaned_data.values():
             name = value.strip()
+            print('cleaning....', name)
             if len(name) == 0:
                 raise ValidationError('Candidate name cannot be empty.')
             if name in used_candidates:
@@ -232,7 +238,6 @@ def get_ballot_form(candidates : 'QuerySet[Candidate]', *args, **kwargs):
     candidate = candidates.first()
     election = candidate.election
     ballot_type = election.ballot_type_str()
-    print(ballot_type)
     if ballot_type == 'single':
         return VoteForm(candidates, *args, **kwargs)
     elif ballot_type == 'rank':

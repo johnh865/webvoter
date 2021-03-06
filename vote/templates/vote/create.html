@@ -9,7 +9,7 @@
             <!-- Election Form -->
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Create Poll</legend>
-                {{ e_form|crispy }}
+                {{ e_form | crispy }}
             </fieldset>
 
             <div class="form-group">
@@ -19,9 +19,7 @@
             <!-- Candidates Forms -->
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Candidates</legend>
-                {% for c_form in c_forms %}
-                    {{ c_form | crispy }}
-                {% endfor %}
+                {{ c_form | crispy }}
             </fieldset>
 
             <div class="form-group">
