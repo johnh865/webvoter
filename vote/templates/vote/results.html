@@ -7,10 +7,11 @@
 <p class="text-left"> {{ post.write_text_winner | safe }} </p>
 <p class="text-left"> {{ post.write_text_ties | safe }} </p>
 
-
+    <div class="container-fluid">
     {% for plot in bokeh_plots %}
         {{plot | safe}}
     {% endfor %}
+    </div>
 
     <br>
     <div class="content-section">
@@ -30,6 +31,19 @@
         </form>
     </div>
 
+    <h3>Choices</h3>
+    <div class="container">
+        <ul class="list-group">
+            {% for candidate in post.candidate_names %}
+                <li> {{ candidate }} </li>
+            {% endfor %}
+        </ul>
+    </div><br>
+
+    <h3>Ballot Data</h3>
+    <div class="container">
+        {{ post.plot_ballot_heatmap | safe }}
+    </div><br>
 
     <h3>Method Code Output</h3>
     <div class="container">

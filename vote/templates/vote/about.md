@@ -4,8 +4,7 @@ WebVoter
 **By John Huang**
 
 Webvoter is a simple online tool to create polls and elections using a variety
-of traditional and experimental voting methods. In additional to the traditional
-"first-past-the-post", or [plurality](https://en.wikipedia.org/wiki/Plurality_(voting)), voting method, WebVoter includes:
+of traditional and experimental voting methods using ranked or scored ballots.
 
 Ranked Ballot Methods
 ---------------------

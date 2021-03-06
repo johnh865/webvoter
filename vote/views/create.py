@@ -217,12 +217,12 @@ class _NOT_USED___CandidateHandler00:
         self.request.session[ELECTION_FORM_NAME] = self.e_form.data
 
 
-    def _create_new_forms(self):
-        c_forms = []
-        for _ in range(self.cnum):
-            c_form_i = CandidateCreateForm0()
-            c_forms.append(c_form_i)
-        return c_forms
+    # def _create_new_forms(self):
+    #     c_forms = []
+    #     for _ in range(self.cnum):
+    #         c_form_i = CandidateCreateForm0()
+    #         c_forms.append(c_form_i)
+    #     return c_forms
 
 
     def save(self):

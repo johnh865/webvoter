@@ -10,7 +10,7 @@ from vote import voting
 from vote.models import Election, Candidate, SCORE_MAX
 
 from bokeh.plotting import figure
-from bokeh.palettes import RdYlBu
+from bokeh.palettes import RdYlBu, inferno
 from bokeh.embed import file_html, components
 from bokeh.resources import CDN
 from bokeh.models import ColumnDataSource, LinearColorMapper, ColorBar
@@ -57,10 +57,6 @@ class PostElection:
         self.method_name = method_name
 
         self.scoremax = self._get_tally_maxscore()
-
-
-
-
         self.erunner = votesim.votemethods.eRunner(etype=etype, numwinners=numwinners, ballots=self.data)
         logging.debug(self.erunner.output)
         winner_indices  = np.asarray(self.erunner.winners_no_ties, dtype=int)
@@ -154,9 +150,9 @@ class PostElection:
         if data.size > 0:
             data[inv_index, candidate_id_index] = ballots_votes
 
-        # Make sure ranked ballots are correctly ordered.
-        if election.ballot_type == voting.ID_RANK:
-            data = votesim.votemethods.tools.rcv_reorder(data)
+            # Make sure ranked ballots are correctly ordered.
+            if election.ballot_type == voting.ID_RANK:
+                data = votesim.votemethods.tools.rcv_reorder(data)
 
         return data, voter_num
 
@@ -166,39 +162,39 @@ class PostElection:
         logger.debug('Getting etype = %s', etype)
 
         if etype == votesim.votemethods.PLURALITY:
-            return [self.plot_tally()]
+            plots = [self.plot_tally()]
 
         elif etype == votesim.votemethods.SCORE:
-            return [self.plot_score()]
+            plots = [self.plot_score()]
 
         elif (etype == votesim.votemethods.IRV or
               etype == votesim.votemethods.IRV_STV or
               etype == votesim.votemethods.STV_GREGORY):
             logger.debug('Getting IRV styl plots')
-            return [self.plot_irv()]
+            plots = [self.plot_irv()]
 
         elif etype == votesim.votemethods.STAR:
-             return [self.plot_score(), self.plot_runoff_star()]
+            plots = [self.plot_score(), self.plot_runoff_star()]
 
         elif etype == votesim.votemethods.TOP_TWO:
-            return [self.plot_tally(), self.plot_runoff()]
+            plots = [self.plot_tally(), self.plot_runoff()]
 
         elif (etype == votesim.votemethods.RANKED_PAIRS or
               etype == votesim.votemethods.SMITH_MINIMAX or
               etype == votesim.votemethods.COPELAND or
               etype == votesim.votemethods.BLACK ):
-            return [self.plot_margin_matrix()]
+            plots = [self.plot_margin_matrix()]
 
         elif etype == votesim.votemethods.BORDA:
-            return [self.plot_score()]
+            plots = [self.plot_score()]
 
         elif etype == votesim.votemethods.SMITH_SCORE:
-            return [self.plot_margin_matrix()]
+            plots = [self.plot_margin_matrix()]
 
         else:
             logger.warning('Method %s has no plotting', etype)
-            return []
-
+            plots = []
+        return plots
 
 
 
@@ -465,7 +461,7 @@ class PostElection:
         """Write html for runoff tally plot."""
         net_votes = np.sum(tally)
         height = len(names) * 60 + 60
-        
+
         rating = tally  / net_votes * 100
         texts = []
         for t, r in zip(tally, rating):
@@ -506,5 +502,60 @@ class PostElection:
         plot.yaxis.axis_label_text_font_size = '12pt'
         plot.yaxis.major_label_text_font_size = '12pt'
 
+        html = file_html(plot, CDN, title=title)
+        return html
+
+
+    def plot_ballot_heatmap(self, width=800):
+
+        title = 'Ballot Data'
+        ballots = self.data
+        candidates = self.candidate_names
+        voters = np.arange(len(ballots))
+        height = len(voters) * 5 + 200
+        width = len(candidates) * 20 + 150
+
+        vmg, cmg = np.meshgrid(voters, candidates, indexing='ij')
+        vr = vmg.ravel()
+        cr = cmg.ravel()
+        br = ballots.ravel()
+
+        if self.election.ballot_type == voting.ID_RANK:
+            bmax = br.max()
+            br[br == 0] = bmax
+
+            mapper = LinearColorMapper(palette=inferno(10), low=bmax, high=br.min())
+        else:
+            mapper = LinearColorMapper(palette=inferno(10), low=br.min(), high=br.max())
+
+        col_data = dict(voter=vr, candidate=cr, ballot=br, y=vr+0.5)
+        col_data = ColumnDataSource(data=col_data)
+
+        plot = figure(
+            y_range = [0, len(ballots)],
+            x_range = candidates,
+            plot_height=height,
+            plot_width=width,
+            title=title,
+            tools='save',
+            tooltips = [
+                ('candidate', '@candidate'),
+                ('voter', '@voter'),
+                ('value', '@ballot'),
+            ]
+        )
+        plot.rect(
+            source=col_data, y='y', x='candidate', width=1, height=1,
+            fill_color={'field': 'ballot', 'transform': mapper},
+            # line_color="#111111",
+        )
+        plot.xaxis.axis_label_text_font_size = '12pt'
+        plot.xaxis.major_label_text_font_size = '12pt'
+        plot.xaxis.major_label_orientation = np.pi / 2
+        plot.xaxis.axis_label = 'Candidate'
+
+        plot.yaxis.axis_label_text_font_size = '12pt'
+        plot.yaxis.major_label_text_font_size = '12pt'
+        plot.yaxis.axis_label = 'Voter'
         html = file_html(plot, CDN, title=title)
         return html
