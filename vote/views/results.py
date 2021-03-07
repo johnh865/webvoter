@@ -81,7 +81,7 @@ class ResultsView(View):
                 messages.error(request, 'Invalid form submission.')
                 for key, value in form.errors.items():
                     messages.error(request, key + ' - ' + str(value))
-                return redirect('view-results-etype-numwinners', election_id=election_id, *args, **kwargs)
+                return redirect('view-results', election_id=election_id, *args, **kwargs)
 
         elif 'vote' in request.POST:
             # kwargs['etype'] = election.get_etype()
