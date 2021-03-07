@@ -21,5 +21,5 @@ class ElectionListPopularView(ListView):
     template_name = 'vote/popular.html'
     context_object_name = 'elections'
     ordering = ['-num_voters']
-    paginate_by = 10
+    paginate_by = 20
 

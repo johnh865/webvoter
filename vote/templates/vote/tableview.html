@@ -1,0 +1,33 @@
+
+
+{% block content %}
+{% if elections %}
+
+<br>
+<div class="container">
+    <table class="table">
+        <thead>
+            <tr>
+              <th scope="col">Election</th>
+              <th scope="col">Date Created</th>
+              <th scope="col">Ballot Type</th>
+              <th scope="col">Voting Method</th>
+              <th scope="col">Number of Voters</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for election in elections %}
+            <tr>
+                <th scope="row"><a href="{% url 'view-results' election.pk %}"> {{ election.description }} </a></th>
+                <td> {{ election.date_published }} </td>
+                <td> {{ election.ballot_type_str }} </td>
+                <td> {{ election.method_str }} </td>
+                <td> {{ election.num_voters }} </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endif %}
+{% endblock content %}
