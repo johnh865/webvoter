@@ -53,8 +53,8 @@ class CandidateCreateForm(forms.Form):
         super(CandidateCreateForm, self).__init__(*args, **kwargs)
 
         self._field_names = self.get_field_names(num_candidates)
-        for field_name in self._field_names:
-            field = forms.CharField(label='Candidate', max_length=100, )
+        for ii, field_name in enumerate(self._field_names):
+            field = forms.CharField(label=f'Candidate #{ii}', max_length=100, )
             self.fields[field_name] = field
             self.fields[field_name].required = False
 
@@ -80,7 +80,6 @@ class CandidateCreateForm(forms.Form):
         print('I am the cleaner!')
         for value in cleaned_data.values():
             name = value.strip()
-            print('cleaning....', name)
             if len(name) == 0:
                 raise ValidationError('Candidate name cannot be empty.')
             if name in used_candidates:
