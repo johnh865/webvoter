@@ -169,18 +169,23 @@ class RankForm(forms.Form):
 
 
     def save(self, user: User):
-        candidates = self._candidates
-        election = candidates.first().election
-        voter = get_or_create_voter(election, user)
+        return save_ranked(self, user)
 
-        for candidate in candidates:
-            candidate_id  = candidate.pk
-            field_name = 'candidate_' + str(candidate_id)
-            data = self.cleaned_data[field_name]
-            v = RankBallot(vote=data, election=election, candidate=candidate, voter=voter)
-            v.save()
-        election.update_voter_num()
-        return
+
+def save_ranked(self, user: User):
+    """Save ScoreForm or RankForm as `self`."""
+    candidates = self._candidates
+    election = candidates.first().election
+    voter = get_or_create_voter(election, user)
+
+    for candidate in candidates:
+        candidate_id  = candidate.pk
+        field_name = 'candidate_' + str(candidate_id)
+        data = self.cleaned_data[field_name]
+        v = RankBallot(vote=data, election=election, candidate=candidate, voter=voter)
+        v.save()
+    election.update_voter_num()
+    return
 
 
 class ScoreForm(forms.Form):
@@ -207,31 +212,14 @@ class ScoreForm(forms.Form):
         self._candidates = candidates
 
 
-    def save(self, user: User):
-        candidates = self._candidates
-        election = candidates.first().election
-
-        # Get the voter who is voting.
-        try:
-            voter  = Voter.objects.get(election=election, user=user)
-        except Voter.DoesNotExist:
-            voter = Voter(election=election, user=user)
-            voter.save()
-
-        for candidate in candidates:
-            candidate_id  = candidate.pk
-            field_name = 'candidate_' + str(candidate_id)
-            data = self.cleaned_data[field_name]
-            v = RankBallot(vote=data, election=election, candidate=candidate, voter=voter)
-            v.save()
-        election.update_voter_num()
-        return
-
-
     def clean(self):
         cleaned_data = super().clean()
         _validate_rank_form_all_zeros(cleaned_data)
         return cleaned_data
+
+
+    def save(self, user: User):
+        return save_ranked(self, user)
 
 
 def get_ballot_form(candidates : 'QuerySet[Candidate]', *args, **kwargs):

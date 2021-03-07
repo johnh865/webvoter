@@ -142,11 +142,7 @@ class CreateBallotView(View):
         if not self.user_handler.is_authenticated:
             messages.success(request, "Setting a cookie")
 
-            try:
-                election_ids = request.COOKIES[ELECTION_IDS_COOKIE]
-            except KeyError:
-                election_ids = ''
-
+            election_ids = request.COOKIES.get(ELECTION_IDS_COOKIE, '')
             election_ids += f',{election_id}'
             response.set_cookie(ELECTION_IDS_COOKIE, election_ids)
         return response

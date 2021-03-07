@@ -13,12 +13,12 @@ class ElectionListLatestView(ListView):
     template_name = 'vote/latest.html'
     context_object_name = 'elections'
     ordering = ['-date_published']
-    paginate_by = 10
+    paginate_by = 100
 
 
 class ElectionListPopularView(ListView):
     model = Election
-    template_name = 'vote/latest.html'
+    template_name = 'vote/popular.html'
     context_object_name = 'elections'
     ordering = ['-num_voters']
     paginate_by = 10
