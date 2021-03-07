@@ -19,11 +19,10 @@ Ranked methods include:
     Also known as "Ranked Choice Voting", instant runoff allows voters to rank candidates from first to last. 
     To select the winner, instant runoff eliminates candidates one-by-one based on who receives the fewest top-choice votes.
     The eliminated candidate's votes are then added to the total of their next choice.
-    In this report the name IRV is used rather than ranked choice to distinguish IRV from other ranked voting methods that have been assessed.
 
   - **Top-two Automatic Runoff** - In top two runoff, the winner is determined from two-rounds of voting. 
     The first round eliminates all but two candidates. The second round then determines the winner from the final two winners.
-    For this report's simulations, an automatic top-two method is employed using ranked ballots.
+    Webvoter simulates runoffs using ranked ballots to compare preferences. 
 
   - **Condorcet-compliant methods** - Condorcet methods are a family of voting systems that allow voters
     to rank candidates from first to last. To select the winner, Condorcet methods simulate multiple head-to-head elections. 
