@@ -50,7 +50,13 @@ class ResultsView(View):
             return render(request, 'vote/results.html', context=context)
 
         # Return pot output
-        plots = post.get_plots()
+        if not post.error_on_run:
+            plots = post.get_plots()
+        else:
+            messages.error(request, 'Error encountered during method calculation.')
+            if post.voter_num <= post.numwinners:
+                messages.warning(request, 'More voters may need to vote in order to correctly calculate the result.')
+            plots = []
         context = {
             'post' : post,
             'bokeh_plots' : plots,

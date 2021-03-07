@@ -57,16 +57,25 @@ class PostElection:
         self.method_name = method_name
 
         self.scoremax = self._get_tally_maxscore()
-        self.erunner = votesim.votemethods.eRunner(etype=etype, numwinners=numwinners, ballots=self.data)
-        logging.debug(self.erunner.output)
-        winner_indices  = np.asarray(self.erunner.winners_no_ties, dtype=int)
-        logging.debug('Winners indices = %s', winner_indices)
-        tie_indices = self.erunner.ties
-        logger.debug('tie_indices=%s', tie_indices)
-        tie_indices = np.array(tie_indices, dtype=int)
+        try:
+            self.erunner = votesim.votemethods.eRunner(etype=etype, numwinners=numwinners, ballots=self.data)
+            self.output = self.erunner.output
+            logging.debug(self.output)
+        except Exception as e:
+            self.output = {'error' : str(e)}
+            self.winners = []
+            self.ties = []
+            self.error_on_run = True
+        else:
+            self.error_on_run = False
+            winner_indices  = np.asarray(self.erunner.winners_no_ties, dtype=int)
+            logging.debug('Winners indices = %s', winner_indices)
+            tie_indices = self.erunner.ties
+            logger.debug('tie_indices=%s', tie_indices)
+            tie_indices = np.array(tie_indices, dtype=int)
 
-        self.winners = self.candidate_names[winner_indices]
-        self.ties = self.candidate_names[tie_indices]
+            self.winners = self.candidate_names[winner_indices]
+            self.ties = self.candidate_names[tie_indices]
 
 
     def _get_tally_maxscore(self):
@@ -101,7 +110,7 @@ class PostElection:
 
     def output_markdown(self):
         s = ''
-        for key, value in self.erunner.output.items():
+        for key, value in self.output.items():
             s += f'{key} = \n{value}\n\n'
         s = s.replace('\n', '\n   ')
         return markdown.markdown(s)
@@ -511,6 +520,7 @@ class PostElection:
         title = 'Ballot Data'
         ballots = self.data
         candidates = self.candidate_names
+        cnum = len(candidates)
         voters = np.arange(len(ballots))
         height = len(voters) * 5 + 200
         width = len(candidates) * 20 + 150
@@ -521,10 +531,9 @@ class PostElection:
         br = ballots.ravel()
 
         if self.election.ballot_type == voting.ID_RANK:
-            bmax = br.max()
-            br[br == 0] = bmax
+            br[br == 0] = cnum
 
-            mapper = LinearColorMapper(palette=inferno(10), low=bmax, high=br.min())
+            mapper = LinearColorMapper(palette=inferno(10), low=cnum, high=1)
         else:
             mapper = LinearColorMapper(palette=inferno(10), low=br.min(), high=br.max())
 

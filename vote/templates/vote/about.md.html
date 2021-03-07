@@ -1,24 +1,47 @@
 <h1>WebVoter</h1>
 <p><strong>By John Huang</strong></p>
 <p>Webvoter is a simple online tool to create polls and elections using a variety
-of traditional and experimental voting methods. In additional to the traditional
-"first-past-the-post", or <a href="https://en.wikipedia.org/wiki/Plurality_(voting)">plurality</a>, voting method, Webvoter includes:</p>
+of traditional and experimental voting methods using ranked or scored ballots.</p>
 <h2>Ranked Ballot Methods</h2>
 <p>Ranked methods rank candidates in order of most to least preferred. A sample ballot
 for example is shown below: </p>
 <p><img alt="Ranked ballot" src="../static/vote/ranking.png" /></p>
 <p>Ranked methods include:</p>
 <ul>
-<li><a href="https://en.wikipedia.org/wiki/Instant-runoff_voting">Instant runoff voting (IRV)</a></li>
-<li>Top-two Automatic Runoff</li>
-<li>Condorcet-compliant methods:<ul>
+<li>
+<p><strong><a href="https://en.wikipedia.org/wiki/Instant-runoff_voting">Instant runoff voting (IRV)</a></strong> - 
+    Also known as "Ranked Choice Voting", instant runoff allows voters to rank candidates from first to last. 
+    To select the winner, instant runoff eliminates candidates one-by-one based on who receives the fewest top-choice votes.
+    The eliminated candidate's votes are then added to the total of their next choice.
+    In this report the name IRV is used rather than ranked choice to distinguish IRV from other ranked voting methods that have been assessed.</p>
+</li>
+<li>
+<p><strong>Top-two Automatic Runoff</strong> - In top two runoff, the winner is determined from two-rounds of voting. 
+    The first round eliminates all but two candidates. The second round then determines the winner from the final two winners.
+    For this report's simulations, an automatic top-two method is employed using ranked ballots.</p>
+</li>
+<li>
+<p><strong>Condorcet-compliant methods</strong> - Condorcet methods are a family of voting systems that allow voters
+    to rank candidates from first to last. To select the winner, Condorcet methods simulate multiple head-to-head elections. 
+    The Condorcet criterion proposes that the best candidate is the candidate which can win every single 1 vs 1 election combination.
+    Take for example a three-way election with candidates Washington, Jefferson, and Monroe.
+    For Washington to win, he must beat Jefferson in a one-on-one election, and then defeat Monroe in another one-on-one election.
+    Condorcet methods compile ranking ballot data to instantly perform these one-on-one matchups.
+    However, it is possible that no candidate is able to beat all other candidates.
+    This scenario is called a Condorcet Paradox.
+    The many variants of Condorcet methods use various algorithms to resolve Condorcet paradoxes, such as:</p>
+<ul>
 <li><a href="https://en.wikipedia.org/wiki/Ranked_pairs">Ranked Pairs</a></li>
 <li><a href="https://electowiki.org/wiki/Smith//Minimax">Smith-minimax</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Black%27s_method">Black</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Copeland%27s_method">Copeland</a></li>
 </ul>
 </li>
-<li><a href="https://en.wikipedia.org/wiki/Borda_count">Borda Count</a></li>
+<li>
+<p><strong><a href="https://en.wikipedia.org/wiki/Borda_count">Borda Count</a></strong> -
+      Borda cound is a simple ranked method where ranks are converted into points.
+      The candidate with the most points wins.</p>
+</li>
 </ul>
 <h2>Scored Ballot Methods</h2>
 <p>Scoerd methods rate candidates from a scale. An example scored ballot is shown
@@ -26,22 +49,53 @@ below:</p>
 <p><img alt="Scored ballot" src="../static/vote/scoring.png" /></p>
 <p>Scored methods include:</p>
 <ul>
-<li><a href="https://en.wikipedia.org/wiki/Score_voting">Scored voting</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Majority_judgment">Majority judgment</a></li>
-<li><a href="https://electowiki.org/wiki/Smith//Score">Smith score</a></li>
-<li><a href="https://en.wikipedia.org/wiki/STAR_voting">STAR voting (Score then Automatic Runoff)</a></li>
+<li>
+<p><strong><a href="https://en.wikipedia.org/wiki/Score_voting">Scored voting</a></strong> - Scored voting, or Range voting,
+    is a simple system based on rating or grading candidates.
+    For example, voters may grade each candidate from a scale of 0 to 5.
+    To calculate the winner, the candidate with the greatest sum of scores wins.</p>
+</li>
+<li>
+<p><strong><a href="https://en.wikipedia.org/wiki/STAR_voting">STAR voting (Score then Automatic Runoff)</a></strong> -
+    STAR voting is a variant of score voting with an extra runoff round.
+    Score voting has been criticized by some voting theorists to be vulnerable to tactical voting.
+    STAR voting was conceived in order to mitigate tactical voting concerns.
+    As with score voting, two runoff candidates are chosen based on the sum of candidate scores.
+    However, during the runoff phase, the final winner is selected based on the most preferred candidate.
+    This runoff serves to encourage voters to express the full range of ballot ratings.</p>
+</li>
+<li>
+<p><strong><a href="https://electowiki.org/wiki/Smith//Score">Smith score</a></strong> - Smith Score is a
+    hybrid combination of scored voting and Condorcet voting systems.
+    Smith score chooses the winner using a Condorcet-style selection as well as rated ballots.
+    However, if a Condorcet Paradox is encountered, Smith-Score uses scored voting to resolve the paradox.</p>
+</li>
+<li>
+<p><strong><a href="https://en.wikipedia.org/wiki/Majority_judgment">Majority judgment</a></strong> -
+    Majority judgment is another system based on rating or grading candidates.
+    However instead of determining the winner from the greatest sum of scores
+    (which is equivalent to the average score for each candidate),
+    the winner is instead determined from the median score.</p>
+</li>
 </ul>
 <h2>Proportional Representation Methods</h2>
 <p>Several voting methods have been devised in order to construct
 proportionate representation when selecting multiple winners. These methods include:</p>
 <ul>
-<li><a href="https://en.wikipedia.org/wiki/Single_transferable_vote">Single transferable Vote</a><ul>
-<li><a href="https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Hare">Hare surplus allocation</a></li>
-<li><a href="https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Gregory">Gregory surplus allocation</a></li>
+<li><strong><a href="https://en.wikipedia.org/wiki/Single_transferable_vote">Single transferable Vote</a></strong> - Single Transferable Vote (STV)
+    is the multi-winner variant of Instant Runoff Voting. In STV, a candidate is elected when they exceed a quota of votes. 
+    If a candidate reaches the quota, surplus votes for that candidate are then transferred to alternatives. STV is used 
+    in elections for Australia and Ireland. <ul>
+<li><a href="https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Hare">Hare surplus allocation</a> - 
+    Ballots are reallocated at random, and exhausted ballots are not reallocated. </li>
+<li><a href="https://en.wikipedia.org/wiki/Counting_single_transferable_votes#Gregory">Gregory surplus allocation</a> - 
+    Ballots are reallocated by fractional transfer of value.</li>
 </ul>
 </li>
-<li><a href="https://electowiki.org/wiki/Reweighted_Range_Voting">Reweighted Range Voting</a></li>
-<li><a href="https://electowiki.org/wiki/Sequential_Monroe_voting">Sequential Monroe Voting</a></li>
+<li><strong><a href="https://electowiki.org/wiki/Reweighted_Range_Voting">Reweighted Range Voting</a></strong> - 
+    A scored voting system where ballots of voters whose favored candidates win are weighted less and less with each round.  </li>
+<li><a href="https://electowiki.org/wiki/Sequential_Monroe_voting">Sequential Monroe Voting</a> - 
+    Another scored proportional voting system. </li>
 </ul>
 <h2>Source Code</h2>
 <p>Source code for the WebVoter webapp, as well as the voting engine, can be found 
