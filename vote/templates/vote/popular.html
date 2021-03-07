@@ -3,7 +3,7 @@
 
 
 {% if elections %}
-<h3>Latest Polls</h3>
+<h3>Popular Polls</h3>
 <br>
 <div class="container">
     <div class="row row-cols-2 gy-2">
@@ -15,7 +15,7 @@
                     <li> Date Created: {{ election.date_published }} </li>
                     <li> Ballot Type: {{ election.ballot_type_str }} </li>
                     <li> Method: {{ election.method_str }} </li>
-                    <li> Number of Voters : {{ election.voter_num }} </li>
+                    <li> Number of Voters : {{ election.num_voters }} </li>
                     <!-- <li> Choices </li>
                     <ul>
                        {% for candidate in election.candidate_names %} 

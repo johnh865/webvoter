@@ -17,13 +17,13 @@ from django.contrib import admin
 from django.urls import path
 import vote.views
 from django.views.generic import TemplateView
-from vote.views import CreateElectionView, ElectionListView, CreateBallotView
+from vote.views import CreateElectionView, ElectionListPopularView, CreateBallotView
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', CreateElectionView.as_view(), name='create-election'),
-    path('view/', ElectionListView.as_view(), name='view'),
+    path('view/', ElectionListPopularView.as_view(), name='view'),
     path('about/', TemplateView.as_view(template_name='vote/about.html'), name='about'),
 
     path('<int:election_id>/', CreateBallotView.as_view(), name='create-ballot'),

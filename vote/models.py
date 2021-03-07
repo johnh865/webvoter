@@ -68,6 +68,10 @@ class Election(models.Model):
         validators = [MaxValueValidator(CANDIDATE_NUM_MAX), MinValueValidator(1)],
         default = 2,
         )
+    num_voters = models.PositiveIntegerField(
+        '# of voters',
+        default = 0,
+    )
 
     description = models.CharField('Poll question', max_length=200)
     date_published = models.DateField(auto_now_add=True)
@@ -102,11 +106,27 @@ class Election(models.Model):
             return self.rankballot_set
 
 
-    def voter_num(self):
+    def get_voter_num(self):
         """get number of voters found for election."""
         ballots = self.get_ballot_set().all()
         ballots_voter_ids = [b.voter.id for b in ballots]
         return len(np.unique(ballots_voter_ids))
+
+
+    def update_voter_num(self):
+        num = self.get_voter_num()
+        self.num_voters = num
+        self.save()
+        return
+
+
+    @staticmethod
+    def update_all():
+        """Update all election voters."""
+        elections = Election.objects.all()
+        for election in elections:
+            election.update_voter_num()
+        return
 
 
     # def user_ballots(self, user):

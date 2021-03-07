@@ -8,7 +8,7 @@ from vote import voting
 
 from vote.models import Candidate, Election, get_default_user
 from vote.forms import ElectionCreateForm, CandidateCreateForm, VoteForm, CandidateCreateForm00
-from vote.views.latest import ElectionListView
+from vote.views.elist import ElectionListPopularView
 # Create your views here.
 
 ELECTION_FORM_NAME = 'form_data'
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class CreateElectionView(View):
-    election_list_view = ElectionListView()
+    election_list_view = ElectionListPopularView()
 
 
     def get_elections(self):

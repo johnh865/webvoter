@@ -113,6 +113,7 @@ class VoteForm(forms.Form):
         voter = get_or_create_voter(election, user)
         v = VoteBallot(vote=True, election=candidate.election, candidate=candidate, voter=voter)
         v.save()
+        election.update_voter_num()
         return
 
 
@@ -178,7 +179,7 @@ class RankForm(forms.Form):
             data = self.cleaned_data[field_name]
             v = RankBallot(vote=data, election=election, candidate=candidate, voter=voter)
             v.save()
-
+        election.update_voter_num()
         return
 
 
@@ -223,7 +224,7 @@ class ScoreForm(forms.Form):
             data = self.cleaned_data[field_name]
             v = RankBallot(vote=data, election=election, candidate=candidate, voter=voter)
             v.save()
-
+        election.update_voter_num()
         return
 
 

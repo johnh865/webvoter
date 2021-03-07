@@ -150,6 +150,8 @@ def build():
         gen_irv_data()
         gen_irv_data2()
         gen_score_data()
+
+    models.Election.update_all()
     return
 
 
